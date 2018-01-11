@@ -1,3 +1,9 @@
+"use strict";
+
+const webpack = require( 'webpack' );
+const ExtractTextPlugin = require( "extract-text-webpack-plugin" );
+const UglifyJsPlugin = require( 'uglifyjs-webpack-plugin' );
+
 module.exports = {
 	entry: {
 		dist:   './index.js',
@@ -6,7 +12,23 @@ module.exports = {
 	output: {
 		path: __dirname,
 		filename: '[name].js',
+		library: "VueSelect",
+		libraryTarget: "umd",
 	},
+	plugins: [
+		new ExtractTextPlugin('[name].css'),
+		new webpack.DefinePlugin({
+			'process.env': {
+				NODE_ENV: '"production"'
+			}
+		}),
+		new UglifyJsPlugin({
+			sourceMap: true,
+		}),
+		new webpack.LoaderOptionsPlugin({
+			minimize: true
+		}),
+	],
 	module: {
 		rules: [{
 			oneOf: [{
@@ -19,7 +41,7 @@ module.exports = {
 					loader: 'vue-loader',
 					options: {
 						loaders: {
-							scss: ['vue-style-loader', 'css-loader', 'sass-loader' ],
+							scss: ExtractTextPlugin.extract({ fallback: 'vue-style-loader', use: ['css-loader', 'sass-loader' ] }),
 						},
 					},
 				},
@@ -27,6 +49,6 @@ module.exports = {
 		}],
 	},
 	externals: {
-		'fuse.js': { commonjs: 'fuse.js', amd: 'fuse.js', root: 'Fuse' },
+		'fuse.js': { commonjs: 'fuse.js', commonjs2: 'fuse.js', amd: 'fuse.js', root: 'Fuse' },
 	},
 };
