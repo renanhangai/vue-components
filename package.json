@@ -1,0 +1,21 @@
+{
+  "name": "@renanhangai/vue-select",
+  "version": "0.0.0",
+  "description": "Vue Select",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "fuse.js": "^3.2.0",
+    "sass-loader": "^6.0.6"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "css-loader": "^0.28.8",
+    "node-sass": "^4.7.2",
+    "pug": "^2.0.0-rc.4",
+    "vue-loader": "^13.7.0",
+    "vue-template-compiler": "^2.5.13",
+    "webpack": "^3.10.0"
+  }
+}
