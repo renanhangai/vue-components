@@ -1,0 +1,8 @@
+*
+!/package.json
+!/dist.js
+!/dist.css
+!/index.js
+!/component.js
+!/component.css
+!/component.vue

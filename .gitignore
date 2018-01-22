@@ -1,0 +1,14 @@
+
+/dist.js
+/dist.css
+/component.css
+/component.js
+
+# Debug files
+npm-debug.log
+
+# Temp files
+*~
+.\#*
+\#*
+
