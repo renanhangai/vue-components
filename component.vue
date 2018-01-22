@@ -109,46 +109,9 @@
 		return { value, mask };
 
 	});
-/*
-	const REGISTERED_MASKS = {
-		cpf:  createMaskFromString( '000.000.000-00' ),
-		cnpj: createMaskFromString( '00.000.000/0000-00' ),
-		cpfcnpj( value ) {
-			value = value.replace( /[^\d+]/g, '' );
-			return value.length >= 12 ? REGISTERED_MASKS.cnpj : REGISTERED_MASKS.cpf;
-		},
-		money( value ) {
-			const original = value;
-			value	= value.replace( /[^\d+]/g, '' );
-			value	= _.trimStart( value, '0' );
-			let len = value.length;
-			let mask = null;
-			if ( len <= 0 )
-				mask = ['0',',','0','0'];
-			else if ( len <= 1 )
-				mask = ['0', ',', '0', /\d/];
-			else if ( len <= 2 )
-				mask = ['0', ',', /\d/, /\d/];
-			else if ( len <= 3 )
-				mask = [/\d/, ',', /\d/, /\d/];
-			else {
-				const ret = [];
-				let c = 0;
-				for ( let i = 0, n = len-2; i<n; ++i ) {
-					if ( c >= 3 ) {
-						ret.push( '.' );
-						c = 0;
-					}
-					ret.push( /\d/ );
-					c += 1;
-				}
-				mask = ret.reverse().concat( [',', /\d/, /\d/] );
-				value = original;
-			}
-			return { value, mask };
-		},
-	};
-*/
+
+
+
 	
 	export default {
 		props: {
@@ -191,7 +154,7 @@
 					if ( typeof(processedMask) !== 'function' )
 						break;
 					processedMask = processedMask( value );
-					if ( processedMask.value !== null ) {
+					if ( processedMask.value != null ) {
 						value = processedMask.value;
 						processedMask = processedMask.mask;
 					}
