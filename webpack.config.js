@@ -43,6 +43,7 @@ module.exports = {
 						loaders: {
 							scss: ExtractTextPlugin.extract({ fallback: 'vue-style-loader', use: ['css-loader', 'sass-loader' ] }),
 						},
+						postcss: [require('autoprefixer')],
 					},
 				},
 			}],

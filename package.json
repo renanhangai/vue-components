@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "autoprefixer": "^7.2.5",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.1",
@@ -22,6 +23,10 @@
   "scripts": {
     "preversion": "webpack"
   },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
   "repository": "https://github.com/renanhangai/vue-components/tree/ripple",
   "author": "renanhangai <hangai.renan@gmail.com>"
 }
