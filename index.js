@@ -1,7 +1,6 @@
-import Component from './component.vue';
+import Component, {InputMaskManager} from './component.vue';
 
-export default {
-	install( vue ) {
-		vue.component( 'vue-input-mask', Component );
-	},
+InputMaskManager.install = function( vue ) {
+	vue.component( 'vue-input-mask', Component );
 };
+export default InputMaskManager;
