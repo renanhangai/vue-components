@@ -1,6 +1,6 @@
 {
   "name": "@renanhangai/vue-ripple",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Vue Ripple effect",
   "main": "dist.js",
   "license": "MIT",
