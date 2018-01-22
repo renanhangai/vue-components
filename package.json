@@ -1,11 +1,10 @@
 {
   "name": "@renanhangai/vue-ripple",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Vue Ripple effect",
   "main": "dist.js",
   "license": "MIT",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
