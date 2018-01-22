@@ -1,7 +1,3 @@
-import Component from './component.vue';
+import {Ripple} from './component.vue';
 
-export default {
-	install( vue ) {
-		vue.component( 'vue-input-mask', Component );
-	},
-};
+export default Ripple;

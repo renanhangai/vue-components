@@ -12,7 +12,7 @@ module.exports = {
 	output: {
 		path: __dirname,
 		filename: '[name].js',
-		library: "VueInputMask",
+		library: "VueRipple",
 		libraryTarget: "umd",
 	},
 	plugins: [
