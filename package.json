@@ -1,7 +1,7 @@
 {
-  "name": "@renanhangai/vue-masked-input",
+  "name": "@renanhangai/vue-input-mask",
   "version": "0.0.0",
-  "description": "Vue Masked Input",
+  "description": "Vue Input Mask",
   "main": "dist.js",
   "license": "MIT",
   "dependencies": {
@@ -24,6 +24,6 @@
   "scripts": {
     "preversion": "webpack"
   },
-  "repository": "https://github.com/renanhangai/vue-components/tree/masked-input",
+  "repository": "https://github.com/renanhangai/vue-components/tree/input-mask",
   "author": "renanhangai <hangai.renan@gmail.com>"
 }
