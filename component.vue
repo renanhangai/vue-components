@@ -3,12 +3,12 @@
 		position: relative;
 		overflow: hidden;
 		-webkit-mask-image: -webkit-radial-gradient(circle, white, black);
+		user-select: none;
 	}
 
 	.vue-ripple {
 		position: absolute;
 		pointer-events: none;
-		user-select: none;
 
 		top: 0;
 		left: 0;
@@ -34,20 +34,25 @@
 <script>
 const ID = "has_ripple";
 export class Ripple {
-	constructor() {
+	constructor( vue ) {
+		this._vue = vue;
 		this._activeRipples = [];
 	}
 
 
 	createDirective() {
 		return {
-			inserted( el ) {
+			inserted: ( el ) => {
 				el.dataset[ ID ] = "ripple";
-				el.classList.toggle( "vue-ripple-container", true );
+				this._vue.nextTick( () => {
+					el.classList.toggle( "vue-ripple-container", true );
+				});
 			},
-			componentUpdated( el ) {
+			componentUpdated: ( el ) => {
 				el.dataset[ ID ] = "ripple";
-				el.classList.toggle( "vue-ripple-container", true );
+				this._vue.nextTick( () => {
+					el.classList.toggle( "vue-ripple-container", true );
+				});
 			},
 		};
 	}
@@ -116,7 +121,7 @@ export class Ripple {
 
 
 	static install( vue ) {
-		const ripple = new Ripple;
+		const ripple = new Ripple( vue );
 		vue.directive( "ripple", ripple.createDirective() );
 		vue.prototype.$ripple = ripple;
 
