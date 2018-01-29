@@ -24,6 +24,9 @@
   "scripts": {
     "preversion": "webpack"
   },
-  "repository": "https://github.com/renanhangai/vue-components/tree/select",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/renanhangai/vue-components/tree/select"
+  },
   "author": "renanhangai <hangai.renan@gmail.com>"
 }
