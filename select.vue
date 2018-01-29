@@ -22,7 +22,7 @@ div.vue-select(role="combobox" :class="selectClasses" tabindex="0" @keydown="onI
 				slot(name="empty")
 					div.vue-select__item-base Não foram encontrados resultados
 			template(v-else)
-				div.vue-select__item-base.vue-select__item(v-for="item, key in itemListFiltered" :data-item-key="key" :class="{ 'vue-select__item--selected': (key === selectedKey) }" role="option")
+				div.vue-select__item-base.vue-select__item(v-for="item, key in itemListFiltered" :key="key" :data-item-key="key" :class="{ 'vue-select__item--selected': (key === selectedKey) }" role="option")
 					| {{getItemText( item )}}
 </template>
 <style lang="scss">
@@ -186,6 +186,8 @@ const Select = {
 		this.selectMode = this.mode || Select.mode;
 		if ( typeof(this.selectMode) === 'function' )
 			this.selectMode = this.selectMode();
+
+		this.refreshItems();
 	},
 	methods: {
 		setItemList( list ) {
@@ -202,6 +204,8 @@ const Select = {
 			}
 			
 			if ( Array.isArray( list ) ) {
+				// Copy the list
+				list = list.slice();
 				this.itemList = Object.freeze( list );
 			} else if ( typeof(list) === 'object' ) {
 				if ( list.then ) {
@@ -221,6 +225,19 @@ const Select = {
 		},
 		refreshItems() {
 			this.setItemList( this.items );
+			this.refreshValue();
+		},
+		refreshValue() {
+			if ( this.value == null || !this.itemList ) {
+				this.internalValue = null;
+			} else {
+				for ( let i = 0, len = this.itemList.length; i<len; ++i ) {
+					if ( (this.itemList[i] === this.value) || (this.itemList[i].id === this.value) || (this.itemList[i].id === this.value.id) ) {
+						this.internalValue = this.itemList[i];
+						break;
+					}
+				}
+			}
 		},
 		getItemText( option ) {
 			if ( typeof(option) === 'string' )
@@ -428,16 +445,7 @@ const Select = {
 			});
 		},
 		value( v ) {
-			if ( this.value == null || !this.itemList ) {
-				this.internalValue = null;
-			} else {
-				for ( let i = 0, len = this.itemList.length; i<len; ++i ) {
-					if ( (list[i] === this.value) || (list[i].id === this.value) || (list[i].id === this.value.id) ) {
-						this.internalValue = list[i];
-						break;
-					}
-				}
-			}			
+			this.refreshValue();			
 		},
 	},
 };
