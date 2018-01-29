@@ -1,7 +1,11 @@
-import Select from './select';
+import Select from './select.vue';
 
 export default {
-	install( vue ) {
-		vue.component( 'vue-select', Select );
+	Select,
+	install( vue, options ) {
+		if ( typeof(options) === 'string' )
+			options = { name: options };
+		options = options || {};
+		vue.component( options.name || 'vue-select', Select );
 	},
 };
