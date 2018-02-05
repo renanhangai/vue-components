@@ -2,8 +2,11 @@
 	.vue-ripple-container {
 		position: relative;
 		overflow: hidden;
-		-webkit-mask-image: -webkit-radial-gradient(circle, white, black);
+		mask-image: radial-gradient(circle, white, black);
 		user-select: none;
+		> * {
+			pointer-events: none;
+		}
 	}
 
 	.vue-ripple {
