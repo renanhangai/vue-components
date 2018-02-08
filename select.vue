@@ -1,5 +1,5 @@
 <template lang="pug">
-div.vue-select(role="combobox" :class="selectClasses" tabindex="0" @keydown="onInputKey" ref="select" aria-haspopup="true" :aria-expanded="dropdownActive ? 'true' : 'false'")
+div.vue-select(role="combobox" :class="selectClasses" :tabindex="disabled ? false : 0" @keydown="onInputKey" ref="select" aria-haspopup="true" :aria-expanded="!disabled && dropdownActive ? 'true' : 'false'")
 
 	//- Select main container
 	div.vue-select__value(@mousedown="onClickContainer")
@@ -131,7 +131,16 @@ div.vue-select(role="combobox" :class="selectClasses" tabindex="0" @keydown="onI
 		input {
 			margin-bottom: 0;
 		}
+
+
+		&.vue-select--disabled {
+			cursor: not-allowed;
+			.vue-select__value {
+				background-color: #e6e6e6;
+			}
+		}
 	}
+
 };
 </style>
 <script>
@@ -171,7 +180,7 @@ const Select = {
 		selectClasses() {
 			return {
 				'vue-select--disabled': this.disabled,
-				'vue-select--dropdown-active': !this.disabled, && this.dropdownActive,
+				'vue-select--dropdown-active': !this.disabled && this.dropdownActive,
 				'vue-select--foundation6': ( this.selectMode === 'foundation6' ),
 			};
 		},
@@ -373,9 +382,13 @@ const Select = {
 			}
 		},
 		onInputAutoSearch( evt ) {
+			// Do nothing when disabled
+			if ( this.disabled )
+				return;
+			// No list to filter
 			if ( !this.itemListFiltered )
 				return;
-			if ( !evt.key || evt.key.length != 1 || !evt.key.match( /[a-z]/i ) )
+			if ( !evt.key || evt.key.length != 1 || !evt.key.match( /[a-z0-9]/i ) )
 				return;
 			evt.stopPropagation();
 			evt.preventDefault();
@@ -463,7 +476,7 @@ const Select = {
 			});
 		},
 		value( v ) {
-			this.refreshValue();			
+			this.refreshValue();
 		},
 	},
 };
