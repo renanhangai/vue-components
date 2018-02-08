@@ -171,7 +171,7 @@ const Select = {
 		selectClasses() {
 			return {
 				'vue-select--disabled': this.disabled,
-				'vue-select--dropdown-active': this.dropdownActive,
+				'vue-select--dropdown-active': !this.disabled, && this.dropdownActive,
 				'vue-select--foundation6': ( this.selectMode === 'foundation6' ),
 			};
 		},
@@ -274,6 +274,8 @@ const Select = {
 		onClickContainer( evt ) {
 			if ( evt.which != 1 )
 				return;
+			if ( this.disabled )
+				return;
 
 			this.dropdownActive = !this.dropdownActive;
 			if ( this.dropdownActive ) {
@@ -287,6 +289,8 @@ const Select = {
 		},
 		onClickItem( evt ) {
 			if ( evt.which != 1 )
+				return;
+			if ( this.disabled )
 				return;
 			
 			const rect = evt.target.getBoundingClientRect();
@@ -312,6 +316,12 @@ const Select = {
 			this.dropdownActive = false;
 		},
 		onInputKey( evt ) {
+			// Do nothing when disabled
+			if ( this.disabled )
+				return;
+
+			// If not active, open the drop down using the arrow keys, enter, or space
+			// Also, if you press an Alphanumeric char, it will start the search with the given char
 			if ( !this.dropdownActive ) {
 				if ( ( evt.keyCode == 32 ) || ( evt.keyCode == 40 ) || ( evt.keyCode == 38 ) || ( evt.keyCode == 13 ) ) {
 					evt.preventDefault();
@@ -330,8 +340,12 @@ const Select = {
 				}
 				return;
 			}
+			// No items to select
 			if ( !this.itemListFiltered )
 				return;
+
+
+			// Select the item by pressing Enter
 			if ( evt.keyCode == 13 ) {
 				evt.preventDefault();
 				const item = this.itemListFiltered[ this.selectedKey ];
@@ -340,6 +354,8 @@ const Select = {
 				this.dropdownActive = false;
 				this.searchText = "";
 				this.$refs.select.focus();
+
+			// Move selection with arrow keys
 			} else if ( evt.keyCode == 40 ) {
 				evt.preventDefault();
 				this.selectedKey = Math.min( this.selectedKey + 1, this.itemListFiltered.length - 1 );
@@ -348,6 +364,8 @@ const Select = {
 				evt.preventDefault();
 				this.selectedKey = Math.max( this.selectedKey - 1, 0 );
 				this.refreshScroll();
+
+			// ESC to cancel the dropdown
 			} else if ( evt.keyCode == 27 ) {
 				this.dropdownActive = false;
 				this.searchText = "";
