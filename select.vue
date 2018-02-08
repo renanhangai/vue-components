@@ -243,9 +243,11 @@ const Select = {
 				for ( let i = 0, len = this.itemList.length; i<len; ++i ) {
 					if ( (this.itemList[i] === this.value) || (this.itemList[i].id === this.value) || (this.itemList[i].id === this.value.id) ) {
 						this.internalValue = this.itemList[i];
-						break;
+						return;
 					}
 				}
+				if ( typeof(this.value) === 'object' )
+					this.internalValue = this.value;
 			}
 		},
 		getItemText( option ) {
