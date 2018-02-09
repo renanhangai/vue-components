@@ -195,13 +195,13 @@ const Select = {
 		this.selectMode = this.mode || Select.mode;
 		if ( typeof(this.selectMode) === 'function' )
 			this.selectMode = this.selectMode();
-
-		this.refreshItems();
+		this.refreshItems( false );
 	},
 	methods: {
-		setItemList( list ) {
+		setItemList( list, callIfLazy ) {
 			if ( typeof(list) === 'function' ) {
-				this.setItemList( list.call( null, this.searchText ) );
+				if ( callIfLazy !== false )
+					this.setItemList( list.call( null, this.searchText ) );
 				return;
 			}
 			
@@ -232,8 +232,8 @@ const Select = {
 				throw new Error( "Invalid list to set. Must be null, array or a promise returning one of these" );
 			
 		},
-		refreshItems() {
-			this.setItemList( this.items );
+		refreshItems( callIfLazy ) {
+			this.setItemList( this.items, callIfLazy );
 			this.refreshValue();
 		},
 		refreshValue() {
@@ -429,8 +429,7 @@ const Select = {
 			}
 		},
 		items() {
-			if ( this.dropdownActive )
-				this.refreshItems();
+			this.refreshItems( false );
 		},
 		itemList( list ) {
 			if ( this.$refs.itemList )
@@ -455,17 +454,7 @@ const Select = {
 				keys: keys,
 			} );
 
-			if ( this.value == null ) {
-				this.internalValue = null;
-			} else {
-				for ( let i = 0, len = list.length; i<len; ++i ) {
-					if ( (list[i] === this.value) || (list[i].id === this.value) || (list[i].id === this.value.id) ) {
-						this.internalValue = list[i];
-						break;
-					}
-				}
-			}
-			
+			this.refreshValue();
 			this.$nextTick( () => {
 				if ( this.value == null )
 					return;
