@@ -53,7 +53,15 @@
 		
 		applyMask( mask, value ) {
 			mask = this.normalizeMask( mask );
-			mask = mask.call( null, value );
+			while ( mask ) {
+				if ( typeof(mask) !== 'function' )
+					break;
+				mask = mask( value );
+				if ( mask.value != null ) {
+					value = mask.value;
+					mask  = mask.mask;
+				}
+			}
 			const results = conformToMask( value, mask );
 			return results.conformedValue;
 		}
