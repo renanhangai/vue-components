@@ -1,5 +1,5 @@
 <style lang="scss">
-	.vue-ripple-container, [data-ripple] {
+	[data-ripple] {
 		position: relative;
 		overflow: hidden;
 		mask-image: radial-gradient(circle, white, black);
@@ -35,36 +35,33 @@
 	}
 </style>
 <script>
-const ID = "ripple";
 export class Ripple {
 	constructor( vue ) {
 		this._vue = vue;
 		this._activeRipples = [];
 	}
-
-
+	
 	createDirective() {
+		const updateElement = this.updateElement.bind( this );
 		return {
-			inserted: ( el ) => {
-				el.dataset[ ID ] = "ripple";
-				this._vue.nextTick( () => {
-					el.classList.toggle( "vue-ripple-container", true );
-				});
-			},
-			componentUpdated: ( el ) => {
-				el.dataset[ ID ] = "ripple";
-				this._vue.nextTick( () => {
-					el.classList.toggle( "vue-ripple-container", true );
-				});
-			},
+			inserted: updateElement,
+			componentUpdated: updateElement,
 		};
 	}
-
+	
+	updateElement( el, binding ) {
+		if ( !('value' in binding) )
+			el.dataset.ripple = "ripple";
+		else if ( value )
+			el.dataset.ripple = "ripple";
+		else
+			el.removeAttribute( "data-ripple" );
+	}
+	
 	start( element, x, y ) {
 		const ripple = document.createElement( "span" );
 		ripple.className = "vue-ripple";
 		this._activeRipples.push( ripple );
-
 
 		const rect = element.getBoundingClientRect();
 		const size = Math.ceil( Math.sqrt(rect.width * rect.width + rect.height * rect.height) );
@@ -82,18 +79,18 @@ export class Ripple {
 
 	startFromEvent( event, type ) {
 		const element = event.target;
-		if ( !element.dataset[ ID ] )
+		if ( !element.dataset.ripple )
 			return;
 
 		const now = Date.now();
-		if ( element.dataset[ ID+"_type" ] && type ) {
-			const time = parseInt( element.dataset[ ID+"_timestamp" ], 10 );
-			if ( ( ( now - time ) < 1000 ) && ( element.dataset[ ID+"_type" ] !== type ) )
+		if ( element.dataset.ripple_type && type ) {
+			const time = parseInt( element.dataset.ripple_timestamp, 10 );
+			if ( ( ( now - time ) < 1000 ) && ( element.dataset.ripple_type !== type ) )
 				return;
 		}
 		
-		element.dataset[ ID+"_type" ] = type;
-		element.dataset[ ID+"_timestamp" ] = now;
+		element.dataset.ripple_type = type;
+		element.dataset.ripple_timestamp = now;
 
 		let x, y;
 		if ( event.offsetX != null ) {
