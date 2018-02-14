@@ -1,5 +1,5 @@
 <style lang="scss">
-	.vue-ripple-container {
+	.vue-ripple-container, [data-ripple] {
 		position: relative;
 		overflow: hidden;
 		mask-image: radial-gradient(circle, white, black);
@@ -35,7 +35,7 @@
 	}
 </style>
 <script>
-const ID = "has_ripple";
+const ID = "ripple";
 export class Ripple {
 	constructor( vue ) {
 		this._vue = vue;
