@@ -52,7 +52,7 @@ export class Ripple {
 	updateElement( el, binding ) {
 		if ( !('value' in binding) )
 			el.dataset.ripple = "ripple";
-		else if ( value )
+		else if ( binding.value )
 			el.dataset.ripple = "ripple";
 		else
 			el.removeAttribute( "data-ripple" );
