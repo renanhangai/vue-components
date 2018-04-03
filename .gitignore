@@ -1,5 +1,14 @@
 
-/dist.js
-/select.css
-/select.js
+# Tmp files
+*~
+.\#*
+\#*
 
+# Build files
+/dist
+
+# Node
+node_modules
+
+# Log
+/yarn-error.log
