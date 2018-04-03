@@ -1,10 +1,10 @@
 "use strict";
 
 const webpack = require( 'webpack' );
-const ExtractTextPlugin = require( "extract-text-webpack-plugin" );
-const UglifyJsPlugin = require( 'uglifyjs-webpack-plugin' );
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
+	mode: 'production',
 	entry: {
 		'vue-select': './src/select.vue',
 	},
@@ -15,17 +15,8 @@ module.exports = {
 		libraryTarget: "umd",
 	},
 	plugins: [
-		new ExtractTextPlugin('[name].css'),
-		new webpack.DefinePlugin({
-			'process.env': {
-				NODE_ENV: '"production"'
-			}
-		}),
-		new UglifyJsPlugin({
-			sourceMap: true,
-		}),
-		new webpack.LoaderOptionsPlugin({
-			minimize: true
+		new MiniCssExtractPlugin({
+			filename: '[name].css',
 		}),
 	],
 	module: {
@@ -40,7 +31,7 @@ module.exports = {
 					loader: 'vue-loader',
 					options: {
 						loaders: {
-							scss: ExtractTextPlugin.extract({ fallback: 'vue-style-loader', use: ['css-loader', 'sass-loader' ] }),
+							scss: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader' ],
 						},
 					},
 				},
