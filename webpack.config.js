@@ -6,11 +6,10 @@ const UglifyJsPlugin = require( 'uglifyjs-webpack-plugin' );
 
 module.exports = {
 	entry: {
-		dist:   './index.js',
-		select: './select.vue',
+		'vue-select': './src/select.vue',
 	},
 	output: {
-		path: __dirname,
+		path: __dirname + "/dist",
 		filename: '[name].js',
 		library: "VueSelect",
 		libraryTarget: "umd",
