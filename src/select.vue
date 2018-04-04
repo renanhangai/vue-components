@@ -1,8 +1,7 @@
 <template lang="pug">
 div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="onBlur" @keydown="onKeyDown")
 
-	div.vue-select__value-container(ref="valueContainer" :class="formControl" tabindex="0" @mousedown="onContainerClick")
-		| {{placeholder}} asdasdasd
+	div.vue-select__value-container(ref="valueContainer" :class="formControl" tabindex="0" @mousedown="onContainerClick" :data-placeholder="placeholder || '\xa0'") {{valueText}}
 		
 	div.vue-select__dropdown-container(:style="{ 'z-index': zIndex }")
 		.vue-select__search-container
@@ -14,16 +13,22 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 			div.vue-select__placeholder-text.vue-select__placeholder-message {{itemList}}
 		slot(v-else-if="itemList.length <= 0" name="empty")
 			div.vue-select__placeholder-text.vue-select__placeholder-empty Não foram encontrados resultados
-		ul.vue-select__list(v-else)
-			li.vue-select__list-item(v-for="item in itemList" tabindex="0")
-				slot(name="option" :item="item")
-					| {{item}}
+		ul.vue-select__list(v-else @click.capture="onMenuClick")
+			li.vue-select__list-item(v-for="item in itemList" tabindex="0" :data-item-id="getItemId(item)")
+				slot(name="option" :item="item" :item-text="getItemText(item)")
+					| {{getItemText(item)}}
 
 
 </template>
 <style lang="scss">
 .vue-select {
 	position: relative;
+
+
+	.vue-select__value-container:empty:before {
+		content: attr(data-placeholder);
+		color: #888;
+	}
 	
 	.vue-select__dropdown-container {
 		display: none;
@@ -42,6 +47,10 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		li { 
 			display: block; 
 			padding: 0.25rem 8px;
+			&:hover {
+				background-color: #f0f0f0;
+				cursor: pointer;
+			}
 		}
 	}
 	.vue-select__placeholder-text {
@@ -58,62 +67,28 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 
 	// Themes
 	&.vue-select--bootstrap4 {
+
+		&.vue-select--dropdown-active {
+			.vue-select__value-container {
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+		}
+		
 		.vue-select__dropdown-container {
 			background-color: #fff;
 			border: 1px solid #ccc;
-			// border-top: none;
+			border-top: none;
+			border-bottom-left-radius: 0.25rem;
+			border-bottom-right-radius: 0.25rem;
 		}
-
 	}
-	// &.vue-select--bootstrap4 {
-
-	// 	.vue-select__value-container {
-	// 		position: relative;
-	// 		display: block;
-	// 		width: 100%;
-	// 		padding: .375rem .75rem;
-	// 		font-size: 1rem;
-	// 		line-height: 1.5;
-	// 		color: #495057;
-	// 		background-color: transparent;
-
-	// 		&:before {
-	// 			content: "";
-	// 			position: absolute;
-	// 			top: 0;
-	// 			left: 0;
-	// 			right: 0;
-	// 			bottom: 0;
-	// 			border: 1px solid #222;
-	// 			border-radius: .25rem;
-
-	// 			transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-	// 			z-index: 10;
-	// 			opacity: 0.3;
-	// 		}
-
-	// 		&:focus {
-	// 			outline: 0;
-	// 			&:before {
-	// 				border-color: var(--primary);
-	// 				box-shadow: 0 0 0 0.2rem var(--primary);
-	// 			}
-	// 		}
-	// 	}
-
-	// 	.vue-select__search-container {
-	// 		padding: 0.5rem 0 1rem;
-	// 	}
-
-	// 	.vue-select__dropdown-container {
-	// 		background-color: #fff;
-	// 	}
-	// }
 };
 </style>
 <script>
 // import Fuse from 'fuse.js';
-import debounce from 'lodash.debounce';
+import _debounce from 'lodash.debounce';
+import _find from 'lodash.find';
 
 const Select = {
 	mode: () => 'foundation6',
@@ -134,6 +109,7 @@ const Select = {
 			searchTextValue: "",
 
 			itemList: null,
+			selectedItemList: [],
 		};
 	},
 	computed: {
@@ -154,12 +130,22 @@ const Select = {
 		formControl() {
 			return ( this.selectMode === 'bootstrap4' || this.selectMode === 'bootstrap3' ) ? 'form-control' : false;
 		},
+
+		valueText() {
+			if ( this.selectedItemList.length <= 0 )
+				return "";
+			return this.selectedItemList.map( ( item ) => this.getItemShortText( item ) ).join( "," );
+		},
 	},
 	created() {
-		this.setItemListDebounced = debounce( this.setItemList, 250 );
+		this.setItemListDebounced = _debounce( this.setItemList, 250 );
 		this.setItemList( this.items );
 	},
 	methods: {
+		selectItem( item ) {
+			this.selectedItemList = [item];
+			this.$emit( 'input', this.selectedItemList[0] );
+		},
 		setItemList( items ) {
 			this.setItemListDebounced.cancel();
 			
@@ -184,6 +170,27 @@ const Select = {
 					});
 			}
 		},
+		toggleActive( status, needFocus ) {
+			this.dropdownActive = ( status == null ) ? !this.dropdownActive : !!status;
+			if ( this.dropdownActive && needFocus )
+				this.$nextTick( () => { this.$refs.input.focus(); } );
+		},
+		
+		getItemId( item ) {
+			if ( typeof(item) === 'string' )
+				return item;
+			return item.id;
+		},
+		getItemShortText( item ) {
+			if ( typeof(item) === 'string' )
+				return item;
+			return item.short || item.text;
+		},
+		getItemText( item ) {
+			if ( typeof(item) === 'string' )
+				return item;
+			return item.text || '';
+		},
 		onBlur() {
 			this.$nextTick( () => {
 				if ( this.$refs.select.contains( document.activeElement ) && ( document.activeElement !== this.$refs.valueContainer ))
@@ -194,14 +201,29 @@ const Select = {
 		onContainerClick() {
 			this.toggleActive( null, true );
 		},
+		onMenuClick( evt ) {
+			let target = evt.target;
+			while ( target ) {
+				if ( target.classList.contains( 'vue-select__list-item' ) )
+					break;
+				target = target.parentNode;
+			}
+			if ( !target )
+				return;
+
+			const id = target.dataset.itemId;
+
+			const item = _find( this.itemList, ( item ) => id === this.getItemId( item ) );
+			if ( item == null )
+				return;
+
+			this.selectItem( item );
+			this.toggleActive( false );
+		},
 		onKeyDown( evt ) {
 			// this.toggleActive( true, true );
 		},
-		toggleActive( status, needFocus ) {
-			this.dropdownActive = ( status == null ) ? !this.dropdownActive : !!status;
-			if ( this.dropdownActive && needFocus )
-				this.$nextTick( () => { this.$refs.input.focus(); } );
-		}
+
 	},
 	watch: {
 		searchTextValue() {
