@@ -11,12 +11,12 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 			div.vue-select__placeholder-text.vue-select__placeholder-searching Carregando
 		slot(v-else-if="typeof itemList === 'string'" name="message" :message="itemList")
 			div.vue-select__placeholder-text.vue-select__placeholder-message {{itemList}}
-		slot(v-else-if="itemList.length <= 0" name="empty")
+		slot(v-else-if="itemListFiltered.length <= 0" name="empty")
 			div.vue-select__placeholder-text.vue-select__placeholder-empty Não foram encontrados resultados
 		ul.vue-select__list(v-else @click.capture="onMenuClick")
-			li.vue-select__list-item(v-for="item in itemList" tabindex="0" :data-item-id="getItemId(item)")
-				slot(name="option" :item="item" :item-text="getItemText(item)")
-					| {{getItemText(item)}}
+			li.vue-select__list-item(v-for="item in itemListFiltered" tabindex="0" :data-item-id="item.id" :key="item.id" :class="getItemClass(item)")
+				slot(name="option" :item="item.value" :text="item.text")
+					| {{item.text}}
 
 
 </template>
@@ -25,10 +25,18 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	position: relative;
 
 
-	.vue-select__value-container:empty:before {
-		content: attr(data-placeholder);
-		color: #888;
+	.vue-select__value-container {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: 100%;
+		
+		&:empty:before {
+			content: attr(data-placeholder);
+			color: #888;
+		}
 	}
+	
 	
 	.vue-select__dropdown-container {
 		display: none;
@@ -86,7 +94,8 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 };
 </style>
 <script>
-// import Fuse from 'fuse.js';
+import Fuse from 'fuse.js';
+
 import _debounce from 'lodash.debounce';
 import _find from 'lodash.find';
 
@@ -98,6 +107,10 @@ const Select = {
 		mode:  String,
 		disabled: Boolean,
 		placeholder: String,
+		multiple: { type: [Boolean, Number], default: false },
+
+		search: { type: Boolean, default: true },
+		filter: { type: [Boolean, String, Array], default: false },
 		
 		// Style options
 		zIndex: Number,
@@ -110,6 +123,7 @@ const Select = {
 
 			itemList: null,
 			selectedItemList: [],
+			selectedItemMap: {},
 		};
 	},
 	computed: {
@@ -131,6 +145,27 @@ const Select = {
 			return ( this.selectMode === 'bootstrap4' || this.selectMode === 'bootstrap3' ) ? 'form-control' : false;
 		},
 
+
+		fuseFilter() {
+			if ( this.filter === false )
+				return null;
+
+			const keys = this.filter === true ? [ 'text' ] : (typeof this.filter === 'string') ? [ 'text', this.filter ] : this.filter;
+				
+			const fuse = new Fuse( this.itemList, {
+				keys: keys,
+			} );
+			return Object.freeze({ fuse: fuse });
+		},
+		itemListFiltered() {
+			if ( !this.fuseFilter || ( this.searchTextValue.length < 3) )
+				return this.itemList;
+				
+			const results = this.fuseFilter.fuse.search( this.searchTextValue );
+			return Object.freeze( results );
+		},
+
+
 		valueText() {
 			if ( this.selectedItemList.length <= 0 )
 				return "";
@@ -140,24 +175,58 @@ const Select = {
 	created() {
 		this.setItemListDebounced = _debounce( this.setItemList, 250 );
 		this.setItemList( this.items );
+
+		this.setValue( this.value );
 	},
 	methods: {
-		selectItem( item ) {
-			this.selectedItemList = [item];
-			this.$emit( 'input', this.selectedItemList[0] );
+		selectItem( item, refreshInput ) {
+			if ( typeof(item) !== 'object' || !item.$vueSelectNormalized )
+				item = this.normalizeItem( item );
+				
+			if ( this.multiple !== false ) {
+				const list = [];
+				const map = Object.assign( {}, this.selectedItemMap );
+				map[item.id] = item;
+				for ( const id of map )
+					list.push( map[id] );
+
+				this.selectedItemList = Object.freeze( list );
+				this.selectedItemMap  = Object.freeze( map );
+			} else {
+				const list = [item];
+				const map = { [item.id]: item };
+				this.selectedItemList = Object.freeze( list );
+				this.selectedItemMap  = Object.freeze( map );
+			}
+
+			if ( refreshInput !== false )
+				this.refreshInputValue();
 		},
 		setItemList( items ) {
 			this.setItemListDebounced.cancel();
 			
 			this.itemList__ticket = null;
 			this.itemList = null;
+			this.itemMap  = null;
 			if ( !items ) {
 				return;
 			} else if ( typeof items === 'string' ) {
 				this.itemList = items;
 				return;
 			} else if ( Array.isArray( items ) ) {
-				this.itemList = items;
+				
+				const list = [];
+				const map = {};
+				for ( let i = 0, len = items.length; i<len; ++i ) {
+					const originalItem = items[i];
+
+					const item = this.normalizeItem( originalItem );
+
+					list.push( item );
+					map[item.id] = item;
+				}
+				this.itemList = Object.freeze( list );
+				this.itemMap  = map;
 				return;
 			} else if ( typeof(items) === 'function' ) {
 				const ticket = {};
@@ -176,6 +245,16 @@ const Select = {
 				this.$nextTick( () => { this.$refs.input.focus(); } );
 		},
 		
+		normalizeItem( item ) {
+			return {
+				id:    this.getItemId(item),
+				text:  this.getItemText(item),
+				short: this.getItemShortText(item),
+				value: item,
+
+				$vueSelectNormalized: true,
+			};
+		},
 		getItemId( item ) {
 			if ( typeof(item) === 'string' )
 				return item;
@@ -191,6 +270,34 @@ const Select = {
 				return item;
 			return item.text || '';
 		},
+		getItemClass( item ) {
+			if ( this.selectedItemMap[item.id] )
+				return 'vue-select__list-item--selected';
+			return false;
+		},
+
+		setValue( value ) {
+			if ( value === this.selectedItemInput )
+				return;
+			else if ( Array.isArray( value ) ) {
+				for ( let i = 0, len = value.length; i<len; ++i )
+					this.selectItem( value[i], false );
+			} else if ( value ) {
+				this.selectItem( value, false );
+			}
+			this.refreshInputValue();
+		},
+		refreshInputValue() {
+			if ( this.multiple === false ) {
+				if ( this.selectedItemList.length <= 0 )
+					this.selectedItemInput = null;
+				else
+					this.selectedItemInput = this.selectedItemList[0].value;
+			} else {
+				this.selectedItemInput = this.selectedItemList.map( ( i ) => i.value );
+			}
+			this.$emit( 'input', this.selectedItemInput );
+		},
 		onBlur() {
 			this.$nextTick( () => {
 				if ( this.$refs.select.contains( document.activeElement ) && ( document.activeElement !== this.$refs.valueContainer ))
@@ -204,7 +311,7 @@ const Select = {
 		onMenuClick( evt ) {
 			let target = evt.target;
 			while ( target ) {
-				if ( target.classList.contains( 'vue-select__list-item' ) )
+				if ( target.classList && target.classList.contains( 'vue-select__list-item' ) )
 					break;
 				target = target.parentNode;
 			}
@@ -213,12 +320,17 @@ const Select = {
 
 			const id = target.dataset.itemId;
 
-			const item = _find( this.itemList, ( item ) => id === this.getItemId( item ) );
+			const item = this.itemMap[ id ];
 			if ( item == null )
 				return;
 
-			this.selectItem( item );
-			this.toggleActive( false );
+			if ( this.selectedItemMap[id] )
+				this.unselectItem( item );
+			else
+				this.selectItem( item );
+
+			if ( this.multiple === false )
+				this.toggleActive( false );
 		},
 		onKeyDown( evt ) {
 			// this.toggleActive( true, true );
@@ -230,6 +342,10 @@ const Select = {
 			if ( typeof(this.items) !== 'function' )
 				return;
 			this.setItemListDebounced( this.items );
+		},
+
+		value( value ) {
+			this.setValue( value );
 		},
 	},
 };
