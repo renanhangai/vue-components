@@ -104,7 +104,6 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 import Fuse from 'fuse.js';
 
 import _debounce from 'lodash.debounce';
-import _find from 'lodash.find';
 
 const Select = {
 	mode: () => 'foundation6',
