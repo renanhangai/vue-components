@@ -1,7 +1,7 @@
 <template lang="pug">
 div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="onBlur" @keydown="onKeyDown")
 
-	div.vue-select__value-container(ref="valueContainer" :class="formControl" tabindex="0" @mousedown="onContainerClick" :data-placeholder="placeholder || '\xa0'") {{valueText}}
+	div.vue-select__value-container(ref="valueContainer" :class="formControl" :tabindex="disabled ? false : 0" @mousedown="onContainerClick" :data-placeholder="placeholder || '\xa0'") {{valueText}}
 		
 	div.vue-select__dropdown-container(:style="{ 'z-index': zIndex }")
 		.vue-select__search-container(v-if="search")
@@ -32,7 +32,7 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		width: 100%;
-		cursor: pointer;
+		cursor: default;
 
 		// background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='32' height='24' viewBox='0 0 32 24'><polygon points='0,0 32,0 16,24' style='fill: rgb%28138, 138, 138%29'></polygon></svg>");
 		// background-origin: content-box;
@@ -100,6 +100,12 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	&.vue-select--dropdown-active {
 		.vue-select__dropdown-container { display: block; }
 	}
+	&.vue-select--disabled {
+		.vue-select__value-container { 
+			background-color: #e9ecef;
+			opacity: 1;	
+		 }
+	}
 
 
 	// Themes
@@ -137,6 +143,7 @@ const Select = {
 		items: true,
 		mode:  String,
 		disabled: Boolean,
+		disabledText: String,
 		placeholder: String,
 		multiple: { type: [Boolean, Number], default: false },
 
@@ -217,6 +224,8 @@ const Select = {
 
 
 		valueText() {
+			if ( this.disabled && this.disabledText !== null )
+				return this.disabledText;
 			if ( this.selectedItemList.length <= 0 )
 				return "";
 			return this.selectedItemList.map( ( item ) => this.getItemShortText( item ) ).join( "," );
@@ -304,6 +313,12 @@ const Select = {
 			}
 		},
 		toggleActive( status, needFocus ) {
+			if ( this.disabled ) {
+				this.dropdownActive = false;
+				this.$refs.input.blur();
+				this.$refs.valueContainer.blur();
+				return;
+			}
 			this.dropdownActive = ( status == null ) ? !this.dropdownActive : !!status;
 			if ( needFocus ) {
 				if ( this.dropdownActive ) {
@@ -386,10 +401,8 @@ const Select = {
 			this.toggleActive( null, true );
 		},
 		onMenuClick( evt ) {
-			console.log( evt );
 			let target = evt.target;
 			while ( target ) {
-				console.log( target );
 				if ( target.classList && target.classList.contains( 'vue-select__list-item' ) )
 					break;
 				target = target.parentNode;
@@ -398,7 +411,6 @@ const Select = {
 				return;
 
 			const id = target.dataset.itemId;
-			console.log( id );
 			if ( this.selectedItemMap[id] ) {
 				this.unselectItem( this.selectedItemMap[id] );
 				this.$refs.input.focus();
@@ -425,6 +437,10 @@ const Select = {
 		},
 		value( value ) {
 			this.setValue( value );
+		},
+		disabled( value ) {
+			if ( value )
+				this.toggleActive( false );
 		},
 	},
 };
