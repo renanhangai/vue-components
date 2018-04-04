@@ -4,8 +4,9 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	div.vue-select__value-container(ref="valueContainer" :class="formControl" tabindex="0" @mousedown="onContainerClick" :data-placeholder="placeholder || '\xa0'") {{valueText}}
 		
 	div.vue-select__dropdown-container(:style="{ 'z-index': zIndex }")
-		.vue-select__search-container
+		.vue-select__search-container(v-if="search")
 			input.vue-select__search(ref="input" :class="formControl" v-model="searchTextValue")
+		input.vue-select__search-hidden(v-else ref="input")
 
 		slot(v-if="itemList === null" name="searching")
 			div.vue-select__placeholder-text.vue-select__placeholder-searching Carregando
@@ -30,6 +31,7 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		width: 100%;
+		cursor: pointer;
 		
 		&:empty:before {
 			content: attr(data-placeholder);
@@ -45,9 +47,14 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		top: 100%;
 		left: 0;
 		right: 0;
+		overflow: hidden;
 	}
 	.vue-select__search-container {
 		padding: 0.5rem 8px 1rem;
+	}
+	.vue-select__search-hidden {
+		position: absolute;
+		top: -100px;
 	}
 	.vue-select__list {
 		margin-bottom: 0;
@@ -55,7 +62,7 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		li { 
 			display: block; 
 			padding: 0.25rem 8px;
-			&:hover {
+			&:hover, &:focus {
 				background-color: #f0f0f0;
 				cursor: pointer;
 			}
@@ -110,7 +117,7 @@ const Select = {
 		multiple: { type: [Boolean, Number], default: false },
 
 		search: { type: Boolean, default: true },
-		filter: { type: [Boolean, String, Array], default: false },
+		filter: { type: [Boolean, String, Array], default: true },
 		
 		// Style options
 		zIndex: Number,
@@ -122,6 +129,8 @@ const Select = {
 			searchTextValue: "",
 
 			itemList: null,
+			itemMap:  {},
+
 			selectedItemList: [],
 			selectedItemMap: {},
 		};
@@ -152,17 +161,28 @@ const Select = {
 
 			const keys = this.filter === true ? [ 'text' ] : (typeof this.filter === 'string') ? [ 'text', this.filter ] : this.filter;
 				
-			const fuse = new Fuse( this.itemList, {
+			const fuse = new Fuse( this.itemListComplete, {
 				keys: keys,
 			} );
 			return Object.freeze({ fuse: fuse });
 		},
 		itemListFiltered() {
 			if ( !this.fuseFilter || ( this.searchTextValue.length < 3) )
-				return this.itemList;
+				return this.itemListComplete;
 				
 			const results = this.fuseFilter.fuse.search( this.searchTextValue );
 			return Object.freeze( results );
+		},
+
+		itemListComplete() {
+			const itemsUnknown = [];
+			for ( const id in this.selectedItemMap ) {
+				if ( !this.itemMap[id] )
+					itemsUnknown.push( this.selectedItemMap[id] );
+			}
+			if ( itemsUnknown.length <= 0 )
+				return this.itemList;
+			return Object.freeze( itemsUnknown.concat( this.itemList ) );
 		},
 
 
@@ -187,7 +207,7 @@ const Select = {
 				const list = [];
 				const map = Object.assign( {}, this.selectedItemMap );
 				map[item.id] = item;
-				for ( const id of map )
+				for ( const id in map )
 					list.push( map[id] );
 
 				this.selectedItemList = Object.freeze( list );
@@ -199,6 +219,20 @@ const Select = {
 				this.selectedItemMap  = Object.freeze( map );
 			}
 
+			if ( refreshInput !== false )
+				this.refreshInputValue();
+		},
+		unselectItem( item, refreshInput ) {
+			if ( typeof(item) !== 'object' || !item.$vueSelectNormalized )
+				item = this.normalizeItem( item );
+				
+			const list = [];
+			const map = Object.assign( {}, this.selectedItemMap );
+			delete map[item.id];
+			for ( const id in map )
+				list.push( map[id] );
+			this.selectedItemList = Object.freeze( list );
+			this.selectedItemMap  = Object.freeze( map );
 			if ( refreshInput !== false )
 				this.refreshInputValue();
 		},
@@ -226,7 +260,7 @@ const Select = {
 					map[item.id] = item;
 				}
 				this.itemList = Object.freeze( list );
-				this.itemMap  = map;
+				this.itemMap  = Object.freeze( map );
 				return;
 			} else if ( typeof(items) === 'function' ) {
 				const ticket = {};
@@ -241,8 +275,13 @@ const Select = {
 		},
 		toggleActive( status, needFocus ) {
 			this.dropdownActive = ( status == null ) ? !this.dropdownActive : !!status;
-			if ( this.dropdownActive && needFocus )
-				this.$nextTick( () => { this.$refs.input.focus(); } );
+			if ( needFocus ) {
+				if ( this.dropdownActive ) {
+					this.$nextTick( () => { this.$refs.input.focus(); } );
+				} else {
+					this.$nextTick( () => { this.$refs.valueContainer.focus(); } );
+				}
+			}
 		},
 		
 		normalizeItem( item ) {
@@ -294,7 +333,7 @@ const Select = {
 				else
 					this.selectedItemInput = this.selectedItemList[0].value;
 			} else {
-				this.selectedItemInput = this.selectedItemList.map( ( i ) => i.value );
+				this.selectedItemInput = Object.freeze( this.selectedItemList.map( ( i ) => i.value ) );
 			}
 			this.$emit( 'input', this.selectedItemInput );
 		},
@@ -319,18 +358,16 @@ const Select = {
 				return;
 
 			const id = target.dataset.itemId;
+			if ( this.selectedItemMap[id] ) {
+				this.unselectItem( this.selectedItemMap[id] );
+				this.$refs.input.focus();
+			} else if ( this.itemMap[ id ] )
+				this.selectItem( this.itemMap[ id ] );
 
-			const item = this.itemMap[ id ];
-			if ( item == null )
-				return;
-
-			if ( this.selectedItemMap[id] )
-				this.unselectItem( item );
-			else
-				this.selectItem( item );
+			
 
 			if ( this.multiple === false )
-				this.toggleActive( false );
+				this.toggleActive( false, true );
 		},
 		onKeyDown( evt ) {
 			// this.toggleActive( true, true );
