@@ -27,15 +27,33 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 
 
 	.vue-select__value-container {
+		position: relative;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		width: 100%;
 		cursor: pointer;
+
+		// background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='32' height='24' viewBox='0 0 32 24'><polygon points='0,0 32,0 16,24' style='fill: rgb%28138, 138, 138%29'></polygon></svg>");
+		// background-origin: content-box;
+		// background-position: right -1rem center;
+		// background-repeat: no-repeat;
+		// background-size: 9px 6px;
+		
 		
 		&:empty:before {
 			content: attr(data-placeholder);
 			color: #888;
+		}
+		&:after {
+			content: "";
+			position: absolute;
+			top: 0;
+			right: 0;
+			left: 0;
+			bottom: 0;
+			pointer-events: none;
+			appearance: menulist;
 		}
 	}
 	
@@ -48,6 +66,8 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		left: 0;
 		right: 0;
 		overflow: hidden;
+
+		z-index: 1;
 	}
 	.vue-select__search-container {
 		padding: 0.5rem 8px 1rem;
@@ -89,6 +109,9 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 				border-bottom-right-radius: 0;
 			}
 		}
+		.vue-select__value-container {
+			padding-left: 16px;
+		}
 		
 		.vue-select__dropdown-container {
 			background-color: #fff;
@@ -117,6 +140,9 @@ const Select = {
 
 		search: { type: Boolean, default: true },
 		filter: { type: [Boolean, String, Array], default: true },
+
+		// Meta data
+		meta: Object,
 		
 		// Style options
 		zIndex: Number,
@@ -294,19 +320,24 @@ const Select = {
 			};
 		},
 		getItemId( item ) {
-			if ( typeof(item) === 'string' )
-				return item;
-			return item.id;
+			return this.getItemMeta( item, 'id' );
 		},
 		getItemShortText( item ) {
-			if ( typeof(item) === 'string' )
-				return item;
-			return item.short || item.text;
+			return this.getItemMeta( item, 'short' ) || this.getItemText( item );
 		},
 		getItemText( item ) {
+			return this.getItemMeta( item, 'text' );
+		},
+		getItemMeta( item, name ) {
 			if ( typeof(item) === 'string' )
 				return item;
-			return item.text || '';
+			if ( this.meta && this.meta[name] ) {
+				if ( typeof(this.meta[name]) === 'string' )
+					return item[this.meta[name]] || "";
+				else if ( typeof(this.meta[name]) === 'function' )
+					return this.meta[name].call( null, item );
+			}
+			return item[name] || '';
 		},
 		getItemClass( item ) {
 			if ( this.selectedItemMap[item.id] )
@@ -335,7 +366,7 @@ const Select = {
 				this.selectedItemInput = Object.freeze( this.selectedItemList.map( ( i ) => i.value ) );
 			}
 			this.$emit( 'input', this.selectedItemInput );
-		},
+		},	
 		onBlur() {
 			this.$nextTick( () => {
 				if ( this.$refs.select.contains( document.activeElement ) && ( document.activeElement !== this.$refs.valueContainer ))
@@ -364,8 +395,7 @@ const Select = {
 				this.selectItem( this.itemMap[ id ] );
 
 			
-
-			if ( this.multiple === false )
+			if ( this.multiple === false || !evt.ctrlKey )
 				this.toggleActive( false, true );
 		},
 		onKeyDown( evt ) {
@@ -379,7 +409,9 @@ const Select = {
 				return;
 			this.setItemListDebounced( this.items );
 		},
-
+		items( items ) {
+			this.setItemList( items );
+		},
 		value( value ) {
 			this.setValue( value );
 		},
