@@ -15,7 +15,7 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		slot(v-else-if="itemListFiltered.length <= 0" name="empty")
 			div.vue-select__placeholder-text.vue-select__placeholder-empty Não foram encontrados resultados
 		ul.vue-select__list(v-else @click.capture="onMenuClick")
-			li.vue-select__list-item(v-for="item in itemListFiltered" tabindex="0" :data-item-id="item.id" :key="item.id" :class="getItemClass(item)")
+			li.vue-select__list-item(v-for="item in itemListFiltered" tabindex="-1" :data-item-id="item.id" :key="item.id" :class="getItemClass(item)")
 				slot(name="option" :item="item.value" :text="item.text")
 					| {{item.text}}
 
@@ -68,6 +68,8 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		overflow: hidden;
 
 		z-index: 1;
+		max-height: 196px;
+		overflow-y: auto;
 	}
 	.vue-select__search-container {
 		padding: 0.5rem 8px 1rem;
@@ -140,6 +142,7 @@ const Select = {
 
 		search: { type: Boolean, default: true },
 		filter: { type: [Boolean, String, Array], default: true },
+		fuse: Object,
 
 		// Meta data
 		meta: Object,
@@ -185,14 +188,16 @@ const Select = {
 				return null;
 
 			const keys = this.filter === true ? [ 'text' ] : (typeof this.filter === 'string') ? [ 'text', this.filter ] : this.filter;
-				
-			const fuse = new Fuse( this.itemListComplete, {
-				keys: keys,
-			} );
+
+			const options = Object.assign( { 
+				keys, 
+				shouldSort: true,
+			}, this.fuse );
+			const fuse = new Fuse( this.itemListComplete, options );
 			return Object.freeze({ fuse: fuse });
 		},
 		itemListFiltered() {
-			if ( !this.fuseFilter || ( this.searchTextValue.length < 3) )
+			if ( !this.fuseFilter || !this.searchTextValue )
 				return this.itemListComplete;
 				
 			const results = this.fuseFilter.fuse.search( this.searchTextValue );
@@ -348,7 +353,10 @@ const Select = {
 		setValue( value ) {
 			if ( value === this.selectedItemInput )
 				return;
-			else if ( Array.isArray( value ) ) {
+
+			this.selectedItemList = Object.freeze( [] );
+			this.selectedItemMap  = Object.freeze( {} );
+			if ( Array.isArray( value ) ) {
 				for ( let i = 0, len = value.length; i<len; ++i )
 					this.selectItem( value[i], false );
 			} else if ( value ) {
@@ -378,8 +386,10 @@ const Select = {
 			this.toggleActive( null, true );
 		},
 		onMenuClick( evt ) {
+			console.log( evt );
 			let target = evt.target;
 			while ( target ) {
+				console.log( target );
 				if ( target.classList && target.classList.contains( 'vue-select__list-item' ) )
 					break;
 				target = target.parentNode;
@@ -388,6 +398,7 @@ const Select = {
 				return;
 
 			const id = target.dataset.itemId;
+			console.log( id );
 			if ( this.selectedItemMap[id] ) {
 				this.unselectItem( this.selectedItemMap[id] );
 				this.$refs.input.focus();
