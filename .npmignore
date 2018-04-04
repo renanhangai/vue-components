@@ -1,7 +1,4 @@
 *
 !/package.json
-!/dist.js
-!/index.js
-!/select.js
-!/select.css
-!/select.vue
+!/dist
+!/src
