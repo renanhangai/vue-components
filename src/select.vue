@@ -1,11 +1,16 @@
 <template lang="pug">
 div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="onBlur" @keydown="onKeyDown")
 
-	div.vue-select__value-container(ref="valueContainer" :class="formControl" :tabindex="disabled ? false : 0" @mousedown="onContainerClick" :data-placeholder="placeholder || '\xa0'") {{valueText}}
+	div.vue-select__value-container(
+		ref="valueContainer" 
+		:class="valueContainerClass" 
+		:tabindex="disabled ? false : 0"
+		@mousedown="onContainerClick" 
+		:data-placeholder="placeholder || '\xa0'") {{valueText}}
 		
 	div.vue-select__dropdown-container(:style="{ 'z-index': zIndex }")
 		.vue-select__search-container(v-if="search")
-			input.vue-select__search(ref="input" :class="formControl" v-model="searchTextValue")
+			input.vue-select__search(ref="input" :class="inputClass" v-model="searchTextValue")
 		input.vue-select__search-hidden(v-else ref="input")
 
 		slot(v-if="itemList === null" name="searching")
@@ -33,13 +38,6 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 		white-space: nowrap;
 		width: 100%;
 		cursor: default;
-
-		// background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='32' height='24' viewBox='0 0 32 24'><polygon points='0,0 32,0 16,24' style='fill: rgb%28138, 138, 138%29'></polygon></svg>");
-		// background-origin: content-box;
-		// background-position: right -1rem center;
-		// background-repeat: no-repeat;
-		// background-size: 9px 6px;
-		
 		
 		&:empty:before {
 			content: attr(data-placeholder);
@@ -73,6 +71,7 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	}
 	.vue-select__search-container {
 		padding: 0.5rem 8px 1rem;
+		input { width: 100%; }
 	}
 	.vue-select__search-hidden {
 		position: absolute;
@@ -108,7 +107,15 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	}
 
 
+
+
 	// Themes
+	&.vue-select--default {
+		.vue-select__value-container {
+			height: 2rem;
+			border: 1px solid #ccc;
+		}
+	}
 	&.vue-select--bootstrap4 {
 
 		&.vue-select--dropdown-active {
@@ -137,7 +144,7 @@ import Fuse from 'fuse.js';
 import _debounce from 'lodash.debounce';
 
 const Select = {
-	mode: () => 'foundation6',
+	mode: () => 'default',
 	props: {
 		value: true,
 		items: true,
@@ -181,15 +188,22 @@ const Select = {
 			return {
 				'vue-select--disabled': this.disabled,
 				'vue-select--dropdown-active': this.dropdownActive,
+				'vue-select--default': ( this.selectMode === 'default' ),
 				'vue-select--foundation6': ( this.selectMode === 'foundation6' ),
 				'vue-select--bootstrap4': ( this.selectMode === 'bootstrap4' ),
 			};
 		},
-		formControl() {
-			return ( this.selectMode === 'bootstrap4' || this.selectMode === 'bootstrap3' ) ? 'form-control' : false;
+		valueContainerClass() {
+			return {
+				'custom-select': (this.selectMode === 'bootstrap4'),
+				'form-control': (this.selectMode === 'bootstrap3'),
+			};
 		},
-
-
+		inputClass() {
+			return {
+				'form-control': (this.selectMode === 'bootstrap4') || (this.selectMode === 'bootstrap3'),
+			};
+		},
 		fuseFilter() {
 			if ( this.filter === false )
 				return null;
