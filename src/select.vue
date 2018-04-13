@@ -43,16 +43,6 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 			content: attr(data-placeholder);
 			color: #888;
 		}
-		&:after {
-			content: "";
-			position: absolute;
-			top: 0;
-			right: 0;
-			left: 0;
-			bottom: 0;
-			pointer-events: none;
-			appearance: menulist;
-		}
 	}
 	
 	
