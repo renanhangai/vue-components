@@ -80,12 +80,30 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	.vue-select__list {
 		margin-bottom: 0;
 		padding-left: 0;
-		li { 
+		.vue-select__list-item { 
 			display: block; 
-			padding: 0.25rem 8px;
+			padding: 0.25rem 32px 0.25rem 8px;
 			&:hover, &:focus {
 				background-color: #f0f0f0;
 				cursor: pointer;
+			}
+
+			&.vue-select__list-item--selected {
+				position: relative;
+				font-weight: bold;
+				&:after {
+					color: #555;
+					content: "";
+					background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMjAuMjg1IDJsLTExLjI4NSAxMS41NjctNS4yODYtNS4wMTEtMy43MTQgMy43MTYgOSA4LjcyOCAxNS0xNS4yODV6Ii8+PC9zdmc+);
+					display: inline-block;
+					position: absolute;
+					right: 8px;
+					top: 0.5rem;
+					width: 1rem;
+					height: 1rem;
+					background-repeat: no-repeat;
+					background-size: contain;
+				}
 			}
 		}
 	}
@@ -112,8 +130,13 @@ div.vue-select(role="combobox" :class="selectClass" ref="select" @blur.capture="
 	// Themes
 	&.vue-select--default {
 		.vue-select__value-container {
-			height: 2rem;
+			padding: 0.25rem 8px;
+			line-height: 1.5rem;
 			border: 1px solid #ccc;
+		}
+		.vue-select__dropdown-container {
+			border: 1px solid #ccc;
+			border-top: none;
 		}
 	}
 	&.vue-select--bootstrap4 {
@@ -242,7 +265,7 @@ const Select = {
 				return this.disabledText;
 			if ( this.selectedItemList.length <= 0 )
 				return "";
-			return this.selectedItemList.map( ( item ) => this.getItemShortText( item ) ).join( "," );
+			return this.selectedItemList.map( ( item ) => this.getItemShortText( item ) ).join( ", " );
 		},
 	},
 	created() {
@@ -425,7 +448,7 @@ const Select = {
 				return;
 
 			const id = target.dataset.itemId;
-			if ( this.selectedItemMap[id] ) {
+			if ( this.selectedItemMap[id] && this.multiple ) {
 				this.unselectItem( this.selectedItemMap[id] );
 				this.$refs.input.focus();
 			} else if ( this.itemMap[ id ] )
