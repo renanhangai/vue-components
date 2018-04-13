@@ -5,12 +5,12 @@
   "main": "dist/vue-select.js",
   "license": "MIT",
   "dependencies": {
-    "bootstrap3": "^3.3.5",
-    "bootstrap4": "npm:bootstrap@^4",
     "fuse.js": "^3.2.0",
     "lodash.debounce": "^4.0.8"
   },
   "devDependencies": {
+    "bootstrap3": "^3.3.5",
+    "bootstrap4": "npm:bootstrap@^4",
     "@storybook/vue": "^3.4.1",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
