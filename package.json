@@ -1,6 +1,6 @@
 {
   "name": "@renanhangai/vue-input-mask",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Vue Input Mask",
   "main": "dist.js",
   "license": "MIT",
