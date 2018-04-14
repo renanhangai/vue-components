@@ -62,6 +62,8 @@
 					mask  = mask.mask;
 				}
 			}
+			if ( mask == null )
+				return value;
 			const results = conformToMask( value, mask );
 			return results.conformedValue;
 		}
